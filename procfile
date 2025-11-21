@@ -1,0 +1,9 @@
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+web: gunicorn run:app
+=======
+web: gunicorn run:app
+>>>>>>> Stashed changes
+=======
+web: gunicorn run:app
+>>>>>>> Stashed changes
