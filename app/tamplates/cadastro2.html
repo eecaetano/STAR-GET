@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Caetano Cadastro</title>
+        <link rel="stylesheet" href="/static/css/cadastro2.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <canvas id="starCanvas"></canvas>
+        <div class="container">
+            <div class="logo-container">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    <ul class="flash-messages">
+                      {% for message in messages %}
+                        <li>{{ message }}</li>
+                      {% endfor %}
+                    </ul>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div class="register-box">
+                <h2 class="titulo-box-1">Cadastro</h2>
+                <form action="{{ url_for('cadastro') }}" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="cpf">CPF</label>
+                        <input type="text" name="cpf_pk" placeholder="12312312399" id="cpf" required oninput="this.value=this.value.replace(/[^0-9]/g, '')" maxlength="11">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" name="sk_email" placeholder="usuario@gmail.com" id="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="senha1">Senha</label>
+                        <input type="password" name="senha_1" placeholder="Digite sua senha" id="senha1" required oninput="this.value.replace(/[^0-9]/g, '')" maxlength="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="senha2">Confirme a Senha</label>
+                        <input type="password" name="senha_2" placeholder="Confirme sua senha" id="senha2" required oninput="this.value.replace(/[^0-9]/g, '')" maxlength="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="imagem">Foto de Perfil (opcional)</label>
+                        <input type="file" name="image" id="imagem" accept="image/*">
+                    </div>
+
+                    <p class="texto-loga-se">Já tem uma conta? <a href="{{ url_for('login') }}" class="loginho">Faça login</a></p>
+                    <button class="btn" type="submit">Cadastrar</button>
+                </form>
+            </div>
+        </div>
+        <script src="/static/cadastro2.js"></script>
+    </body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Gate</title>
+  <link rel="stylesheet" href="/static/css/display.css">
+  <link rel="shortcut icon" href="/static/imgs/Star2.jpg" type="image/x-icon">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <div class="barra">
+    <h1 class="titulo-detect-visual">Star <span>Gate</span></h1>
+    <div class="perso_aluno">
+      <a href="{{ url_for('cadastro') }}">
+        <button class="Secret">Cadastro</button>
+      </a>
+      <button class="Direct" onclick="window.location.href='login';">Login</button>
+    </div>
+  </div>
+
+    <main class="home-container">
+        <div class="portal-container">
+           <div class="portal-anel"></div>
+           <h1 class="apresentacao">Star <span>Gate</span></h1>
+        </div>
+
+
+
+       <div class="texto-container">
+          <h1 class="titulo">Conectando<br>Escolas através do<br>Universo da Tecnologia</h1>
+          <h2 class="subtitulo">Bem-vindo ao Star Gate</h2>
+          <p>
+            O Star Gate é um sistema inovador desenvolvido para facilitar o acesso e a gestão de informações na escola.<br><br>
+            Com ele, alunos, professores e funcionários podem interagir de maneira eficiente e segura.<br><br>
+            Explore as funcionalidades do Star Gate e descubra como ele pode transformar a forma como você se conecta com a escola.
+          </p>
+       </div>
+    </main>
+
+  <!-- Rodapé -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Sobre Nós</h3>
+        <p>Somos uma equipe dedicada a criar soluções digitais inovadoras e acessíveis.</p>
+        <div class="social-links">
+          <a href="#">f</a>
+          <a href="#">📷</a>
+          <a href="#">𝕏</a>
+          <a href="#">in</a>
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h3>Links Rápidos</h3>
+        <ul>
+          <li><a href="#">Início</a></li>
+          <li><a href="#">Sobre</a></li>
+          <li><a href="#">Serviços</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contato</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Recursos</h3>
+        <ul>
+          <li><a href="#">Documentação</a></li>
+          <li><a href="#">Tutoriais</a></li>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Suporte</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h3>Contato</h3>
+        <ul>
+          <li><a href="mailto:StarGate@gmail.com">StarGate@gmail.com</a></li>
+          <li><a href="tel:+5511999999999">+55 (11) 99999-9999</a></li>
+          <li>São Paulo, SP - Brasil</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 StarGate. Todos os direitos reservados.</p>
+      <p><a href="#" class="footer-link">Política de Privacidade</a> | <a href="#" class="footer-link">Termos de Uso</a></p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconhecimento Facial em Tempo Real</title>
+</head>
+<body>
+    <h1>Reconhecimento Facial</h1>
+
+    <video id="video" autoplay playsinline width="640" height="480" style="background:black;"></video>
+    <div id="status">Status: aguardando...</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const statusEl = document.getElementById('status');
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                video.srcObject = stream;
+                video.play();
+                recognizeLoop();
+            } catch (err) {
+                console.error('Erro ao acessar a câmera:', err);
+                statusEl.textContent = 'Erro ao acessar a câmera';
+            }
+        }
+
+        async function recognizeFrame() {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageBase64 = canvas.toDataURL('image/jpeg');
+
+                const response = await fetch('/recognize_face', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageBase64 })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'granted') {
+                    statusEl.textContent = `Acesso liberado: ${data.name}`;
+                    statusEl.style.color = 'green';
+                } else {
+                    statusEl.textContent = 'Acesso negado';
+                    statusEl.style.color = 'red';
+                }
+
+            } catch (err) {
+                console.error('Erro no reconhecimento:', err);
+                statusEl.textContent = 'Erro no reconhecimento';
+                statusEl.style.color = 'orange';
+            }
+        }
+
+        function recognizeLoop() {
+            recognizeFrame();
+            setTimeout(recognizeLoop, 500); // a cada 500ms
+        }
+
+        window.addEventListener('load', startCamera);
+    </script>
+</body>
+</html>

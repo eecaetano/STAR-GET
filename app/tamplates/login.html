@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caetano Login</title>
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <canvas id="starCanvas"></canvas>
+    <div class="container">
+        <div class="logo-container">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <ul class="flash-messages">
+                  {% for message in messages %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
+            {% endif %}
+            {% endwith %}
+        </div>
+        <div class="register-box">
+            <h2 class="titulo-box-1">Login</h2>
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="form-group">
+                    <label for="cpf">CPF</label>
+                    <input type="text" name="cpf_pk" placeholder="12312312399" id="cpf" required oninput="this.value=this.value.replace(/[^0-9]/g, '')" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" name="senha" placeholder="Digite sua senha" id="senha" required oninput="this.value.replace(/[^0-9]/g, '')" maxlength="8">
+                </div>
+                <p class="texto-cadastra-se">Não tem uma conta? <a href="{{ url_for('cadastro') }}" class="cadastrinho">Cadastre-se</a></p>
+                <button class="btn" type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+    <script src="/static/login.js"></script>
+</body>
+</html>
