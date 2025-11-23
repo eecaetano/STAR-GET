@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STAR-GET — Teste</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <header class="header"><img class="logo" src="/mnt/data/e161989f-c55d-4e65-97dc-74a14f886620.png"><div class="brand"><h1>Teste de Reconhecimento</h1><p>Verifique se seu cadastro biométrico funciona.</p></div></header>
+
+    <main class="card">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div class="controls">
+        <button id="openCam">Abrir câmera</button>
+        <button id="capture">Capturar</button>
+        <button id="verify">Verificar</button>
+      </div>
+      <div id="res" class="status" aria-live="polite">Aguardando ação</div>
+    </main>
+  </div>
+
+<script type="module">
+import * as FL from './assets/face-lib.js';
+const video=document.getElementById('video'), canvas=document.getElementById('canvas'), res=document.getElementById('res');
+let stream=null;
+document.getElementById('openCam').onclick = async ()=>{
+  stream = await navigator.mediaDevices.getUserMedia({video:{width:640}});
+  video.srcObject = stream;
+  res.innerText = 'Câmera aberta';
+};
+document.getElementById('capture').onclick = ()=>{
+  if(!video.srcObject) return alert('Abra a câmera');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx=canvas.getContext('2d'); ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  res.innerText = 'Foto capturada';
+};
+document.getElementById('verify').onclick = async ()=>{
+  const known = FL.listDescriptors();
+  if(!known.length) return res.innerText = 'Nenhum usuário cadastrado';
+  res.innerText = 'Tentando reconhecer...';
+  // try face-api first
+  let faceapiLoaded = !!window.faceapi;
+  if(!faceapiLoaded){
+    const load = await FL.loadFaceApiIfNeeded('/models');
+    faceapiLoaded = load.ok;
+  }
+  if(faceapiLoaded){
+    const blob = await new Promise(r=> canvas.toBlob(r,'image/png'));
+    const img = await faceapi.bufferToImage(blob);
+    const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!detection) return res.innerText = 'Nenhum rosto detectado';
+    const probe = Array.from(detection.descriptor);
+    const match = FL.findBestMatchProbe(probe, 0.45);
+    if(match.found){
+      res.innerHTML = `<span class="ok">Reconhecido: ${match.best.item.name} (dist ${match.best.dist.toFixed(3)})</span>`;
+    } else {
+      res.innerHTML = `<span class="err">Não reconhecido — melhor: ${match.best.item.name} (dist ${match.best.dist.toFixed(3)})</span>`;
+    }
+  } else {
+    // fallback compare hashes (if stored as 0/1 arrays)
+    // build probe hash from canvas
+    const tmp=document.createElement('canvas'); tmp.width=9; tmp.height=8;
+    const t=tmp.getContext('2d'); t.drawImage(canvas,0,0,9,8);
+    const d=t.getImageData(0,0,9,8).data; const vals=[];
+    for(let i=0;i<d.length;i+=4){ vals.push(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]); }
+    let hash='';
+    for(let y=0;y<8;y++){ for(let x=0;x<8;x++){ hash += (vals[y*9+x] > vals[y*9+x+1])? '1':'0'; } }
+    // compare with stored descriptors (which may be array of 0/1 or float)
+    let best={dist:9999,item:null};
+    FL.listDescriptors().forEach(k=>{
+      const stored = k.descriptor;
+      // if stored as array of floats -> try distance
+      if(stored.length > 128){
+        // can't compare; skip
+      } else {
+        // convert both to strings and hamming
+        const s = stored.join('');
+        let h=0; for(let i=0;i<s.length;i++) if(s[i]!==hash[i]) h++;
+        if(h < best.dist){ best={dist:h,item:k}; }
+      }
+    });
+    if(best.item) res.innerHTML = `<span class="${best.dist<20?'ok':'err'}">melhor: ${best.item.name} (hamming ${best.dist})</span>`;
+    else res.innerText='Sem correspondência (fallback)';
+  }
+};
+</script>
+</body>
+</html>
