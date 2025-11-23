@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STAR-GET — Cadastro</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img class="logo" src="/mnt/data/e161989f-c55d-4e65-97dc-74a14f886620.png" alt="logo">
+      <div class="brand"><h1>Cadastro de Usuário</h1><p>Capture sua face e salve o descritor localmente.</p></div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <div class="media">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="canvas" style="display:none"></canvas>
+          <div class="controls">
+            <button id="btnStart">Abrir câmera</button>
+            <button id="btnCapture" class="ghost small">Capturar</button>
+            <button id="btnSave" class="small">Salvar Cadastro</button>
+          </div>
+          <div id="status" class="status">Status: pronto</div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <label>
+          Nome
+          <input id="name" type="text" placeholder="Seu nome completo" />
+        </label>
+        <label>
+          Senha (apenas demonstração)
+          <input id="password" type="password" placeholder="Crie uma senha" />
+        </label>
+        <div style="margin-top:12px">
+          <strong>Model engine</strong>
+          <div style="margin-top:8px">
+            <button id="useFaceApi" class="small">Usar face-api (recomendado)</button>
+            <button id="useHash" class="small ghost">Usar Hash (fallback)</button>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div id="preview" aria-live="polite"></div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="footer">Dica: para robustez, posicione-se frente à câmera em ambiente bem iluminado.</div>
+  </div>
+
+<script type="module">
+import * as FL from './assets/face-lib.js';
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const status = document.getElementById('status');
+let stream=null;
+let engine = 'faceapi'; // or 'hash'
+let lastDescriptor = null;
+let lastImageDataUrl = null;
+
+document.getElementById('btnStart').addEventListener('click', async ()=>{
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{width:640}, audio:false});
+    video.srcObject = stream;
+    status.innerText = 'Câmera ativada';
+  }catch(e){ status.innerText = 'Erro ao abrir câmera: '+e.message; }
+});
+
+document.getElementById('btnCapture').addEventListener('click', ()=>{
+  if(!video.srcObject) return alert('Abra a câmera primeiro');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d'); ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  lastImageDataUrl = canvas.toDataURL('image/png');
+  document.getElementById('preview').innerHTML = `<img src="${lastImageDataUrl}" class="canvas-preview" alt="Preview" />`;
+  status.innerText = 'Foto capturada';
+});
+
+document.getElementById('useFaceApi').addEventListener('click', async ()=>{
+  status.innerText = 'Carregando modelos face-api...';
+  const r = await FL.loadFaceApiIfNeeded('/models');
+  if(!r.ok){ status.innerText = 'Falha ao carregar modelos — usar fallback hash'; engine='hash'; return; }
+  engine = 'faceapi';
+  status.innerText = 'face-api pronto';
+});
+
+document.getElementById('useHash').addEventListener('click', ()=>{ engine='hash'; status.innerText='Modo hash ativado (demo)'; });
+
+document.getElementById('btnSave').addEventListener('click', async ()=>{
+  const name = document.getElementById('name').value.trim();
+  const pwd = document.getElementById('password').value;
+  if(!name){ alert('Informe o nome'); return; }
+  if(!lastImageDataUrl){ alert('Capture a foto primeiro'); return; }
+
+  status.innerText = 'Processando imagem...';
+
+  if(engine==='faceapi' && window.faceapi){
+    // detect and compute descriptor
+    const img = await faceapi.fetchImage(lastImageDataUrl);
+    const detections = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!detections){ status.innerText='Nenhum rosto detectado'; alert('Não detectamos rosto — tente novamente'); return; }
+    const descriptor = detections.descriptor;
+    const saved = FL.saveDescriptor({name, descriptor});
+    // save meta (also image + pwd in localStorage as demo)
+    const meta = {userId: saved.id, name, pwd};
+    localStorage.setItem('starget_meta', JSON.stringify(meta));
+    status.innerHTML = `Cadastrado: <strong>${name}</strong> (id ${saved.id})`;
+    alert('Cadastro concluído!');
+  } else {
+    // fallback: use simple image hash (dHash)
+    // compute small 9x8 grayscale differences from canvas
+    const tmp = document.createElement('canvas'); tmp.width=9; tmp.height=8;
+    const tctx = tmp.getContext('2d');
+    const img = new Image(); img.src = lastImageDataUrl;
+    await img.decode();
+    tctx.drawImage(img,0,0,9,8);
+    const data = tctx.getImageData(0,0,9,8).data;
+    const vals=[];
+    for(let i=0;i<data.length;i+=4){ const r=data[i],g=data[i+1],b=data[i+2]; vals.push(0.299*r+0.587*g+0.114*b); }
+    let hash='';
+    for(let y=0;y<8;y++){ for(let x=0;x<8;x++){ hash += (vals[y*9+x] > vals[y*9+x+1])? '1':'0'; } }
+    // store as descriptor array of 0/1
+    const descriptor = Uint8Array.from(hash.split('').map(ch=>+ch));
+    const saved = FL.saveDescriptor({name, descriptor});
+    localStorage.setItem('starget_meta', JSON.stringify({userId:saved.id, name, pwd}));
+    status.innerText = `Cadastrado (hash fallback): ${name}`;
+    alert('Cadastro salvo (hash fallback).');
+  }
+});
+</script>
+</body>
+</html>
