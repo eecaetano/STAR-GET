@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STAR-GET — Simulação de Porta</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img class="logo" src="/mnt/data/e161989f-c55d-4e65-97dc-74a14f886620.png">
+      <div class="brand"><h1>Simulação de Porta</h1><p>Teste final — verifique o acesso.</p></div>
+    </header>
+
+    <main class="card">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div class="controls">
+        <button id="openCam">Abrir câmera</button>
+        <button id="snap">Capturar e verificar</button>
+      </div>
+
+      <div id="door" class="door" role="img" aria-live="polite"></div>
+      <div id="msg" class="message"></div>
+    </main>
+  </div>
+
+<script type="module">
+import * as FL from './assets/face-lib.js';
+const video=document.getElementById('video'), canvas=document.getElementById('canvas'), door=document.getElementById('door'), msg=document.getElementById('msg');
+let stream=null;
+document.getElementById('openCam').onclick = async ()=>{
+  stream = await navigator.mediaDevices.getUserMedia({video:{width:640}});
+  video.srcObject = stream;
+  msg.innerText = 'Câmera ativada';
+};
+
+function playChime(){
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type='sine'; o.frequency.value = 880;
+  o.connect(g); g.connect(ctx.destination);
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(.12, now+0.02);
+  o.start(now); o.frequency.exponentialRampToValueAtTime(1320, now+0.5);
+  g.gain.linearRampToValueAtTime(0, now+1.2); o.stop(now+1.25);
+}
+
+function playSiren(){
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+  o1.type='sawtooth'; o2.type='sawtooth';
+  o1.frequency.value = 440; o2.frequency.value=660;
+  o1.connect(g); o2.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(.0001, ctx.currentTime);
+  g.gain.linearRampToValueAtTime(.18, ctx.currentTime+0.02);
+  setTimeout(()=>{ g.gain.linearRampToValueAtTime(0, ctx.currentTime+0.5); o1.stop(); o2.stop(); }, 1400);
+  o1.start(); o2.start();
+}
+
+document.getElementById('snap').onclick = async ()=>{
+  if(!video.srcObject) return alert('Abra a câmera');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx=canvas.getContext('2d'); ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  msg.innerText = 'Processando...';
+  // try face-api
+  let loaded = !!window.faceapi;
+  if(!loaded){ const r = await FL.loadFaceApiIfNeeded('/models'); loaded = r.ok; }
+  if(loaded){
+    const blob = await new Promise(r=> canvas.toBlob(r,'image/png'));
+    const img = await faceapi.bufferToImage(blob);
+    const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!det){ msg.innerText='Nenhuma face detectada'; playSiren(); return; }
+    const probe = Array.from(det.descriptor);
+    const match = FL.findBestMatchProbe(probe, 0.45);
+    if(match.found){
+      door.classList.add('open'); door.innerHTML = '<div style="font-weight:700;color:#083; font-size:20px">🔓</div>';
+      msg.innerHTML = `<strong style="color:green">Acesso Liberado — ${match.best.item.name}</strong>`;
+      playChime();
+    } else {
+      door.classList.remove('open'); door.innerHTML = '';
+      msg.innerHTML = `<strong style="color:#b00">Acesso Negado! Você não tem permissão para entrar!</strong>`;
+      playSiren();
+    }
+  } else {
+    msg.innerText = 'Modelos não disponíveis — use fallback';
+    // fallback: use stored hash-like
+    const tmp=document.createElement('canvas'); tmp.width=9; tmp.height=8;
+    const tctx=tmp.getContext('2d'); tctx.drawImage(canvas,0,0,9,8);
+    const d=tctx.getImageData(0,0,9,8).data; const vals=[];
+    for(let i=0;i<d.length;i+=4) vals.push(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);
+    let hash=''; for(let y=0;y<8;y++){ for(let x=0;x<8;x++){ hash += (vals[y*9+x] > vals[y*9+x+1])? '1':'0'; } }
+    // compare
+    const known = FL.listDescriptors();
+    let best={dist:9999,item:null};
+    for(const k of known){
+      const s = k.descriptor.join ? k.descriptor.join('') : k.descriptor.toString();
+      let h=0; for(let i=0;i<s.length;i++) if(s[i]!==hash[i]) h++;
+      if(h < best.dist){ best={dist:h,item:k}; }
+    }
+    if(best.item && best.dist < 20){
+      door.classList.add('open'); door.innerHTML = '<div style="font-weight:700;color:#083; font-size:20px">🔓</div>';
+      msg.innerHTML = `<strong style="color:green">Acesso Liberado — ${best.item.name}</strong>`; playChime();
+    } else {
+      door.classList.remove('open'); door.innerHTML = '';
+      msg.innerHTML = `<strong style="color:#b00">Acesso Negado! Você não tem permissão para entrar!</strong>`; playSiren();
+    }
+  }
+};
+</script>
+</body>
+</html>
