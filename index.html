@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>STAR-GET — Bem-vindo</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img class="logo" src="/mnt/data/e161989f-c55d-4e65-97dc-74a14f886620.png" alt="STAR-GET logo">
+      <div class="brand">
+        <h1>STAR-GET</h1>
+        <p>Demostração moderna de cadastro biométrico e simulação de porta com reconhecimento facial</p>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <a href="cadastro.html">Cadastrar</a>
+      <a href="test.html">Testar reconhecimento</a>
+      <a href="door.html">Simulação da porta</a>
+    </nav>
+
+    <main class="hero card">
+      <div style="flex:1">
+        <h2>Rápido resumo</h2>
+        <p class="status">Este frontend usa <strong>face-api.js</strong> para reconhecimento no cliente (requer que os modelos estejam disponíveis em <code>/models/</code>). Caso não queira usar modelos, o sistema tem fallback por hash para demonstração.</p>
+        <ul>
+          <li>Cadastro seguro: descritores gravados localmente (IndexedDB/localStorage).</li>
+          <li>Teste de reconhecimento no navegador.</li>
+          <li>Simulação de porta com som e animação ao liberar o acesso.</li>
+        </ul>
+      </div>
+      <aside style="width:360px">
+        <div class="card">
+          <h3>Preparação</h3>
+          <p class="status">Suba a pasta <code>/models/</code> com os modelos do face-api (ou use fallback). Posso gerar os modelos e instruções se quiser.</p>
+          <p class="status">Hospede no <strong>GitHub Pages</strong> (site estático) — tudo roda no navegador.</p>
+        </div>
+      </aside>
+    </main>
+
+    <div class="footer">Feito para demonstração — se quiser eu monto também um Docker e backend real.</div>
+  </div>
+</body>
+</html>
